@@ -1,0 +1,403 @@
+<h1 id="webplover-crm-meta-integration-documentation">WebPlover CRM - Meta Integration Documentation</h1>
+<p>Complete guide for setting up Facebook/Meta integrations with FluentCRM.</p>
+<hr>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#meta-receive-leads">Meta Receive Leads - Receive leads from Facebook Instant Forms</a></li>
+<li><a href="#meta-send-leads">Meta Send Leads - Send lead data to Facebook Conversions API</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#faq">FAQ</a></li>
+</ol>
+<hr>
+<h2 id="meta-receive-leads">Meta Receive Leads</h2>
+<p>Automatically receive leads from <strong>Facebook Instant Forms (Lead Ads)</strong> and forward them to FluentCRM.</p>
+<p>When someone fills out your Facebook/Instagram Instant Form, this module captures the lead data via webhook and sends it to FluentCRM.</p>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Active Facebook Business account</li>
+<li>Facebook Page with Instant Forms (Lead Ads) created</li>
+<li>FluentCRM installed and activated</li>
+<li>WebPlover CRM plugin installed</li>
+</ul>
+<h3 id="step-1-create-facebook-app">Step 1: Create Facebook App</h3>
+<ol>
+<li>Go to <a href="https://developers.facebook.com/apps/">Facebook Developers</a></li>
+<li>Click <strong>&quot;Create App&quot;</strong></li>
+<li>Fill in the details:<ul>
+<li><strong>App Name</strong>: <code>yourdomain.com - Leads to CRM</code></li>
+<li><strong>Use Case</strong>: Other</li>
+<li><strong>App Type</strong>: Business</li>
+</ul>
+</li>
+<li>In <strong>App Settings → Basic</strong>, add your <strong>Privacy Policy URL</strong></li>
+<li>Note down your <strong>App ID</strong> and <strong>App Secret</strong></li>
+</ol>
+<h3 id="step-2-add-required-products">Step 2: Add Required Products</h3>
+<ol>
+<li>In your app dashboard, go to <strong>&quot;Add Product&quot;</strong></li>
+<li><p>Add these products:</p>
+<ul>
+<li><strong>Marketing API</strong> - Click &quot;Set Up&quot;</li>
+<li><strong>Webhooks</strong> - Click &quot;Set Up&quot;</li>
+</ul>
+</li>
+</ol>
+<h3 id="step-3-configure-facebook-webhooks">Step 3: Configure Facebook Webhooks</h3>
+<ol>
+<li>Go back to your Facebook App dashboard</li>
+<li>Navigate to <strong>Products → Webhooks</strong></li>
+<li>Select <strong>&quot;Page&quot;</strong> from &quot;Select product&quot; dropdown</li>
+<li>Enter:<ul>
+<li><strong>Callback URL</strong>: The URL from plugin settings</li>
+<li><strong>Verify Token</strong>: The token from plugin settings</li>
+</ul>
+</li>
+<li>Click <strong>&quot;Verify and Save&quot;</strong></li>
+<li>Subscribe to the <strong><code>leadgen</code></strong> field by toggling it on</li>
+</ol>
+<h3 id="step-4-generate-page-access-token">Step 4: Generate Page Access Token</h3>
+<ol>
+<li>Go to <a href="https://developers.facebook.com/tools/explorer/">Graph API Explorer</a></li>
+<li>In the right sidebar:<ul>
+<li>Select your app under <strong>&quot;Meta App&quot;</strong></li>
+<li>Click <strong>&quot;Generate Access Token&quot;</strong></li>
+</ul>
+</li>
+<li>Add these <strong>7 permissions</strong> (click &quot;Add a Permission&quot;):<ul>
+<li><code>pages_show_list</code></li>
+<li><code>ads_management</code></li>
+<li><code>business_management</code></li>
+<li><code>leads_retrieval</code></li>
+<li><code>pages_read_engagement</code></li>
+<li><code>pages_manage_metadata</code></li>
+<li><code>pages_manage_ads</code></li>
+</ul>
+</li>
+<li>Click <strong>&quot;Generate Access Token&quot;</strong> button</li>
+<li>In the popup:<ul>
+<li>Select your <strong>Facebook Page</strong></li>
+<li>Select your <strong>Business</strong> (if prompted)</li>
+<li>Click <strong>&quot;Done&quot;</strong></li>
+</ul>
+</li>
+</ol>
+<h3 id="step-5-get-page-access-token">Step 5: Get Page Access Token</h3>
+<ol>
+<li>Still in Graph API Explorer</li>
+<li>In the query field, enter: <code>me/accounts</code></li>
+<li>Click <strong>&quot;Submit&quot;</strong></li>
+<li>Find your page in the response</li>
+<li>Copy the <strong><code>access_token</code></strong> value - this is your <strong>Page Access Token</strong></li>
+<li>Save this token securely</li>
+</ol>
+<h3 id="step-6-get-page-id">Step 6: Get Page ID</h3>
+<ol>
+<li>Go to <a href="https://developers.facebook.com/tools/debug/accesstoken/">Access Token Debugger</a></li>
+<li>Paste your <strong>Page Access Token</strong></li>
+<li>Click <strong>&quot;Debug&quot;</strong></li>
+<li>Note down the <strong>Page ID</strong> shown in the results</li>
+</ol>
+<h3 id="step-7-subscribe-page-to-app">Step 7: Subscribe Page to App</h3>
+<ol>
+<li>Go back to <a href="https://developers.facebook.com/tools/explorer/">Graph API Explorer</a></li>
+<li>Change the method to <strong>POST</strong> (dropdown on the left)</li>
+<li>In the query field, enter:<pre><code><span class="xml"></span><span class="hljs-template-variable">{PAGE_ID}</span><span class="xml">/subscribed_apps?subscribed_fields=leadgen</span>
+</code></pre>Replace <code>{PAGE_ID}</code> with your actual Page ID</li>
+<li>Make sure <strong>&quot;User or Page&quot;</strong> is set to <strong>&quot;Page&quot;</strong> in the right sidebar</li>
+<li>Click <strong>&quot;Submit&quot;</strong></li>
+<li>You should see: <code>{&quot;success&quot;: true}</code></li>
+</ol>
+<h3 id="step-8-verify-connection">Step 8: Verify Connection</h3>
+<ol>
+<li>Go to <a href="https://business.facebook.com/latest/instant_forms/crm_setup">Facebook CRM Setup</a></li>
+<li>You should see <strong>&quot;Connected to CRM&quot;</strong> status</li>
+<li>If not connected, review the previous steps</li>
+</ol>
+<h3 id="step-9-configure-plugin-settings">Step 9: Configure Plugin Settings</h3>
+<ol>
+<li>In WordPress admin, go to <strong>WebPlover CRM → Meta Receive Leads</strong></li>
+<li>Fill in the fields:<ul>
+<li><strong>Facebook App ID</strong>: Your App ID from Step 1</li>
+<li><strong>Facebook App Secret</strong>: Your App Secret from Step 1</li>
+<li><strong>Page Access Token</strong>: Token from Step 4</li>
+<li><strong>Forward URL</strong>: Your FluentCRM webhook URL</li>
+</ul>
+</li>
+</ol>
+<h3 id="step-10-configure-field-mapping">Step 10: Configure Field Mapping</h3>
+<ol>
+<li>In plugin settings, go to <strong>&quot;Form Field Mapping&quot;</strong> section</li>
+<li>Click <strong>&quot;Refresh Forms&quot;</strong> to load your Instant Forms</li>
+<li>Select a form from the dropdown</li>
+<li>Map Facebook Instant Form fields to FluentCRM fields:<ul>
+<li>Standard fields (email, name, phone, etc.)</li>
+<li>Custom fields</li>
+<li>UTM parameters</li>
+</ul>
+</li>
+<li>Click <strong>&quot;Save Mapping&quot;</strong></li>
+</ol>
+<h3 id="step-11-test-instant-form-submission">Step 11: Test Instant Form Submission</h3>
+<ol>
+<li>Go to <a href="https://developers.facebook.com/tools/lead-ads-testing/">Lead Ads Testing Tool</a></li>
+<li>Select your page</li>
+<li>Select an Instant Form</li>
+<li>Click <strong>&quot;Create Test Lead&quot;</strong></li>
+<li>Check FluentCRM to verify the lead was received</li>
+</ol>
+<h3 id="step-12-go-live">Step 12: Go Live</h3>
+<ol>
+<li>In Facebook App dashboard, switch your app to <strong>&quot;Live&quot;</strong> mode</li>
+<li>Submit another test lead to confirm everything works in production</li>
+<li>Monitor the <strong>Logs</strong> section in plugin settings for any issues</li>
+</ol>
+<hr>
+<h2 id="meta-send-leads">Meta Send Leads</h2>
+<p>Send lead data from FluentCRM to Facebook Conversions API for better ad tracking and optimization.</p>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Active Facebook Business account</li>
+<li>Facebook Ads account</li>
+<li>Facebook Pixel or Conversions API dataset</li>
+<li>FluentCRM with contact stages configured</li>
+</ul>
+<h3 id="step-1-access-facebook-events-manager">Step 1: Access Facebook Events Manager</h3>
+<ol>
+<li>Go to <a href="https://web.facebook.com/events_manager2/">Facebook Events Manager</a></li>
+<li>Select your <strong>Ad Account</strong> from the top-right dropdown</li>
+</ol>
+<h3 id="step-2-create-conversions-api-connection">Step 2: Create Conversions API Connection</h3>
+<ol>
+<li>Click <strong>&quot;Connect data&quot;</strong> button</li>
+<li>Select <strong>&quot;CRM&quot;</strong> as the data source</li>
+<li>Click <strong>&quot;Next&quot;</strong></li>
+</ol>
+<h3 id="step-3-manual-setup">Step 3: Manual Setup</h3>
+<ol>
+<li>Go to <strong>&quot;Connect manually&quot;</strong> tab</li>
+<li>Select <strong>&quot;Do the code manually yourself&quot;</strong> option</li>
+<li>Click <strong>&quot;Next&quot;</strong></li>
+</ol>
+<h3 id="step-4-get-dataset-id-and-access-token">Step 4: Get Dataset ID and Access Token</h3>
+<ol>
+<li>In the <strong>&quot;Create endpoint&quot;</strong> section:<ul>
+<li>Click <strong>&quot;Generate Access Token&quot;</strong></li>
+<li>Copy the generated <strong>Access Token</strong> (starts with <code>EAA...</code>)</li>
+<li>Copy the <strong>Dataset ID</strong> (numeric value)</li>
+</ul>
+</li>
+<li>Save both values securely</li>
+</ol>
+<h3 id="step-5-configure-plugin-settings">Step 5: Configure Plugin Settings</h3>
+<ol>
+<li>In WordPress admin, go to <strong>WebPlover CRM → Meta Send Leads</strong></li>
+<li>Fill in the fields:<ul>
+<li><strong>Meta Dataset ID</strong>: Your Dataset ID from Step 4</li>
+<li><strong>Meta Access Token</strong>: Your Access Token from Step 4</li>
+</ul>
+</li>
+<li>Click <strong>&quot;Save Changes&quot;</strong></li>
+</ol>
+<h3 id="step-6-configure-stage-to-event-mapping">Step 6: Configure Stage to Event Mapping</h3>
+<ol>
+<li>In the <strong>&quot;Stage to Facebook Event Mapping&quot;</strong> section</li>
+<li>Map FluentCRM contact stages to Facebook events:<ul>
+<li><strong>Stage</strong>: Select a FluentCRM stage (e.g., &quot;New&quot;, &quot;Qualified&quot;, &quot;Lost&quot;)</li>
+<li><strong>Event Name</strong>: Select a Facebook standard event or enter custom event name</li>
+<li><strong>Custom Data Parameters</strong>: Add optional parameters (value, currency, etc.)</li>
+</ul>
+</li>
+<li>Click <strong>&quot;Add Mapping&quot;</strong> to add more stage mappings</li>
+<li>Click <strong>&quot;Save Changes&quot;</strong></li>
+</ol>
+<h3 id="step-7-test-event-sending">Step 7: Test Event Sending</h3>
+<ol>
+<li>In FluentCRM, change a contact&#39;s stage</li>
+<li>Check the <strong>Logs</strong> section in Meta Send Leads settings</li>
+<li>Verify the event was sent successfully</li>
+<li>Check Facebook Events Manager to see the event</li>
+</ol>
+<h3 id="step-8-verify-in-facebook">Step 8: Verify in Facebook</h3>
+<ol>
+<li>Go to <a href="https://web.facebook.com/events_manager2/">Facebook Events Manager</a></li>
+<li>Select your dataset</li>
+<li>Go to <strong>&quot;Test Events&quot;</strong> tab</li>
+<li>You should see your test events appearing</li>
+</ol>
+<h3 id="available-facebook-standard-events">Available Facebook Standard Events</h3>
+<ul>
+<li><code>AddPaymentInfo</code></li>
+<li><code>AddToCart</code></li>
+<li><code>AddToWishlist</code></li>
+<li><code>CompleteRegistration</code></li>
+<li><code>Contact</code></li>
+<li><code>CustomizeProduct</code></li>
+<li><code>Donate</code></li>
+<li><code>FindLocation</code></li>
+<li><code>InitiateCheckout</code></li>
+<li><code>Lead</code></li>
+<li><code>Purchase</code></li>
+<li><code>Schedule</code></li>
+<li><code>Search</code></li>
+<li><code>StartTrial</code></li>
+<li><code>SubmitApplication</code></li>
+<li><code>Subscribe</code></li>
+<li><code>ViewContent</code></li>
+</ul>
+<h3 id="custom-data-parameters">Custom Data Parameters</h3>
+<p>You can add custom data to events:</p>
+<ul>
+<li><strong>value</strong>: Monetary value (e.g., 99.99)</li>
+<li><strong>currency</strong>: Currency code (e.g., USD, EUR)</li>
+<li><strong>content_name</strong>: Product/content name</li>
+<li><strong>content_category</strong>: Category</li>
+<li><strong>content_ids</strong>: Array of product IDs</li>
+<li><strong>contents</strong>: Array of content objects</li>
+<li><strong>num_items</strong>: Number of items</li>
+<li><strong>predicted_ltv</strong>: Predicted lifetime value</li>
+<li><strong>status</strong>: Status (e.g., completed, pending)</li>
+</ul>
+<hr>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="meta-receive-leads-issues">Meta Receive Leads Issues</h3>
+<h4 id="leads-not-being-received">Leads not being received</h4>
+<ol>
+<li><p><strong>Check webhook subscription</strong>:</p>
+<ul>
+<li>Verify webhook is subscribed to <code>leadgen</code> field</li>
+<li>Check callback URL is correct</li>
+<li>Verify verification token matches</li>
+</ul>
+</li>
+<li><p><strong>Check access token</strong>:</p>
+<ul>
+<li>Token should have all 7 required permissions</li>
+<li>Token should not be expired</li>
+<li>Use Access Token Debugger to verify</li>
+</ul>
+</li>
+<li><p><strong>Check logs</strong>:</p>
+<ul>
+<li>Go to Meta Receive Leads settings</li>
+<li>Check the Logs section for errors</li>
+<li>Look for signature validation failures</li>
+</ul>
+</li>
+<li><p><strong>Test webhook</strong>:</p>
+<ul>
+<li>Use Lead Ads Testing Tool</li>
+<li>Check if test leads are received</li>
+<li>Review error messages</li>
+</ul>
+</li>
+</ol>
+<h4 id="field-mapping-not-working">Field mapping not working</h4>
+<ol>
+<li><p><strong>Refresh forms</strong>:</p>
+<ul>
+<li>Click &quot;Refresh Forms&quot; button</li>
+<li>Verify forms are loading</li>
+</ul>
+</li>
+<li><p><strong>Check field names</strong>:</p>
+<ul>
+<li>Ensure CRM fields exist in FluentCRM</li>
+<li>Verify field slugs are correct</li>
+</ul>
+</li>
+<li><p><strong>Check forward URL</strong>:</p>
+<ul>
+<li>Verify FluentCRM webhook URL is correct</li>
+<li>Test URL manually with a POST request</li>
+</ul>
+</li>
+</ol>
+<h3 id="meta-send-leads-issues">Meta Send Leads Issues</h3>
+<h4 id="events-not-sending">Events not sending</h4>
+<ol>
+<li><p><strong>Check credentials</strong>:</p>
+<ul>
+<li>Verify Dataset ID is correct</li>
+<li>Verify Access Token is valid</li>
+<li>Check token hasn&#39;t expired</li>
+</ul>
+</li>
+<li><p><strong>Check stage mapping</strong>:</p>
+<ul>
+<li>Ensure stages are mapped to events</li>
+<li>Verify event names are correct</li>
+<li>Check custom data format</li>
+</ul>
+</li>
+<li><p><strong>Check logs</strong>:</p>
+<ul>
+<li>Go to Meta Send Leads settings</li>
+<li>Check Logs section for API errors</li>
+<li>Look for response codes and error messages</li>
+</ul>
+</li>
+<li><p><strong>Verify in Facebook</strong>:</p>
+<ul>
+<li>Check Events Manager for events</li>
+<li>Use Test Events tab</li>
+<li>Review event details</li>
+</ul>
+</li>
+</ol>
+<h4 id="events-sending-but-not-showing-in-facebook">Events sending but not showing in Facebook</h4>
+<ol>
+<li><p><strong>Wait for processing</strong>:</p>
+<ul>
+<li>Events may take 15-30 minutes to appear</li>
+<li>Check Test Events tab first</li>
+</ul>
+</li>
+<li><p><strong>Check dataset</strong>:</p>
+<ul>
+<li>Verify correct dataset is selected</li>
+<li>Check dataset status is active</li>
+</ul>
+</li>
+<li><p><strong>Check event parameters</strong>:</p>
+<ul>
+<li>Ensure required parameters are included</li>
+<li>Verify data format is correct</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="faq">FAQ</h2>
+<h3 id="general-questions">General Questions</h3>
+<p><strong>Q: Do I need both Meta Receive and Meta Send Leads?</strong><br>A: No, they serve different purposes. Use Receive Leads to get leads from Facebook into FluentCRM. Use Send Leads to send conversion events from FluentCRM to Facebook for ad optimization.</p>
+<p><strong>Q: Will this work with Instagram Instant Forms?</strong><br>A: Yes, Instagram Instant Forms (Lead Ads) connected to your Facebook Page will work automatically.</p>
+<p><strong>Q: Can I use this with multiple Facebook Pages?</strong><br>A: Currently, each installation supports one Facebook Page. For multiple pages, you&#39;ll need separate configurations.</p>
+<h3 id="meta-receive-leads">Meta Receive Leads</h3>
+<p><strong>Q: What happens if email field is empty?</strong><br>A: The plugin automatically generates a unique email address in the format <code>{timestamp}{random}@wpr.com</code>.</p>
+<p><strong>Q: Can I map custom fields?</strong><br>A: Yes, you can map any Facebook form field to any FluentCRM custom field.</p>
+<p><strong>Q: Are UTM parameters captured?</strong><br>A: Yes, UTM parameters are automatically captured and can be mapped to custom fields.</p>
+<p><strong>Q: How often does the access token need to be refreshed?</strong><br>A: Page Access Tokens typically last 60 days. The plugin will attempt to auto-refresh tokens when they&#39;re close to expiring.</p>
+<h3 id="meta-send-leads">Meta Send Leads</h3>
+<p><strong>Q: What data is sent to Facebook?</strong><br>A: The plugin sends hashed user data (email, name, phone) and event information. All personal data is hashed using SHA256 before sending.</p>
+<p><strong>Q: Can I send custom events?</strong><br>A: Yes, you can enter any custom event name in the mapping configuration.</p>
+<p><strong>Q: How quickly are events sent?</strong><br>A: Events are sent in real-time when a contact&#39;s stage changes in FluentCRM.</p>
+<p><strong>Q: Can I see what data was sent?</strong><br>A: Yes, check the Logs section in Meta Send Leads settings to see all sent events and their payloads.</p>
+<hr>
+<h2 id="support">Support</h2>
+<p>For additional support:</p>
+<ul>
+<li><strong>Documentation</strong>: <a href="https://webplover.com/docs/wp-webplover-crm">https://webplover.com/docs/wp-webplover-crm</a></li>
+<li><strong>Video Tutorials</strong>: <a href="https://www.youtube.com/watch?v=nRw-u71BRlQ">YouTube Channel</a></li>
+<li><strong>Support Email</strong>: support@webplover.com</li>
+</ul>
+<hr>
+<h2 id="changelog">Changelog</h2>
+<h3 id="version-1-0-0">Version 1.0.0</h3>
+<ul>
+<li>Initial release</li>
+<li>Meta Receive Leads module</li>
+<li>Meta Send Leads module</li>
+<li>Field mapping functionality</li>
+<li>Comprehensive logging system</li>
+</ul>
+<hr>
+<p><em>Last updated: December 2025</em></p>
